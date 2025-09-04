@@ -18,7 +18,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
   if (!config.supabaseUrl || !config.supabaseKey) {
     // Return empty server if not configured
     console.warn("Supabase not configured. Please provide supabaseUrl and supabaseKey.");
-    return server.server;
+    return server;
   }
 
   // Initialize Supabase client
@@ -203,5 +203,5 @@ export default function createServer({ config }: { config: z.infer<typeof config
     }
   });
 
-  return server.server;
+  return server;
 }
