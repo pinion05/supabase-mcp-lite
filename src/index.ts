@@ -4,8 +4,8 @@ import { z } from 'zod';
 
 // Configuration schema - minimal
 export const configSchema = z.object({
-  supabaseUrl: z.string().optional().describe("Supabase project URL (or use SUPABASE_URL env)"),
-  supabaseKey: z.string().describe("Supabase service role key"),
+  supabaseUrl: z.string().optional().describe("Supabase project URL"),
+  supabaseKey: z.string().optional().describe("Supabase service role key"),
 });
 
 export default function createServer({ config }: { config: z.infer<typeof configSchema> }) {
@@ -14,56 +14,19 @@ export default function createServer({ config }: { config: z.infer<typeof config
     version: "1.0.0",
   });
 
-  // Get URL from config or environment variable
-  const supabaseUrl = config.supabaseUrl || process.env.SUPABASE_URL;
-  if (!supabaseUrl) {
-    throw new Error("Supabase URL required: provide supabaseUrl in config or SUPABASE_URL env");
+  // Check if configuration is provided
+  if (!config.supabaseUrl || !config.supabaseKey) {
+    // Return empty server if not configured
+    console.warn("Supabase not configured. Please provide supabaseUrl and supabaseKey.");
+    return server.server;
   }
 
   // Initialize Supabase client
-  const supabase: SupabaseClient = createClient(supabaseUrl, config.supabaseKey, {
+  const supabase: SupabaseClient = createClient(config.supabaseUrl, config.supabaseKey, {
     auth: { persistSession: false }
   });
 
-  // Tool 1: Query - Execute raw SQL
-  server.registerTool("query", {
-    title: "Run SQL",
-    inputSchema: z.object({
-      sql: z.string(),
-      params: z.array(z.any()).optional()
-    }),
-    handler: async ({ sql, params = [] }) => {
-      try {
-        const { data, error } = await supabase.rpc('exec_sql', { 
-          query: sql, 
-          params 
-        }).single();
-        
-        if (error) {
-          // Fallback to direct query if RPC doesn't exist
-          const { data: result, error: queryError } = await supabase
-            .from('_sql_runner')
-            .select('*')
-            .sql(sql);
-          
-          if (queryError) throw queryError;
-          
-          // Limit results to reduce tokens
-          const limited = Array.isArray(result) && result.length > 100 
-            ? { rows: result.slice(0, 100), total: result.length }
-            : result;
-          
-          return { result: limited };
-        }
-        
-        return { result: data };
-      } catch (error) {
-        throw new Error(`Query failed: ${error}`);
-      }
-    }
-  });
-
-  // Tool 2: Select - Simple table query
+  // Tool 1: Select - Simple table query
   server.registerTool("select", {
     title: "Get data",
     inputSchema: z.object({
@@ -96,7 +59,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
     }
   });
 
-  // Tool 3: Mutate - Insert/Update/Delete
+  // Tool 2: Mutate - Insert/Update/Delete
   server.registerTool("mutate", {
     title: "Change data",
     inputSchema: z.object({
@@ -145,7 +108,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
     }
   });
 
-  // Tool 4: Storage - File operations
+  // Tool 3: Storage - File operations
   server.registerTool("storage", {
     title: "Files",
     inputSchema: z.object({
@@ -194,7 +157,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
     }
   });
 
-  // Tool 5: Auth - User management  
+  // Tool 4: Auth - User management  
   server.registerTool("auth", {
     title: "Users",
     inputSchema: z.object({

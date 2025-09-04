@@ -4,7 +4,7 @@ Minimal Supabase MCP server - 70% less context usage than standard implementatio
 
 ## Why Lite?
 
-- **5 tools instead of 50+** - Only essential operations
+- **4 tools instead of 50+** - Only essential operations  
 - **Minimal descriptions** - No verbose explanations
 - **Simple parameters** - No complex nested schemas
 - **Auto-truncated results** - Max 100 rows per query
@@ -19,24 +19,19 @@ Minimal Supabase MCP server - 70% less context usage than standard implementatio
     "command": "npx",
     "args": ["@smithery/cli", "connect", "@pinion05/supabase-mcp-lite"],
     "config": {
-      "supabaseUrl": "YOUR_SUPABASE_URL",  // Optional if SUPABASE_URL env is set
+      "supabaseUrl": "YOUR_SUPABASE_URL",
       "supabaseKey": "YOUR_SERVICE_ROLE_KEY"
     }
   }
 }
 ```
 
-Or with environment variable:
+Both fields are optional if not configured, but server won't work without them.
 
-```bash
-export SUPABASE_URL=YOUR_SUPABASE_URL
-```
-
-## Tools (5)
+## Tools (4)
 
 | Tool | Purpose | Parameters |
 |------|---------|------------|
-| `query` | Run SQL | sql, params? |
 | `select` | Get data | table, where?, limit? |
 | `mutate` | Change data | action, table, data?, where? |
 | `storage` | Files | action, bucket, path?, data? |
@@ -44,23 +39,20 @@ export SUPABASE_URL=YOUR_SUPABASE_URL
 
 ## Examples
 
-```sql
--- Query tool
-query(sql: "SELECT * FROM users WHERE age > $1", params: [18])
-
--- Select tool  
+```javascript
+// Select tool  
 select(table: "posts", where: {status: "published"}, limit: 10)
 
--- Mutate tool
+// Mutate tool
 mutate(action: "insert", table: "todos", data: {title: "New task"})
 mutate(action: "update", table: "todos", data: {done: true}, where: {id: 1})
 mutate(action: "delete", table: "todos", where: {id: 1})
 
--- Storage tool
+// Storage tool
 storage(action: "upload", bucket: "images", path: "avatar.jpg", data: "base64...")
 storage(action: "list", bucket: "images")
 
--- Auth tool
+// Auth tool
 auth(action: "list")
 auth(action: "create", email: "user@example.com", password: "secure123")
 ```
