@@ -3,4 +3,4 @@ config:
   accessToken:
     type: string
     description: Supabase Personal Access Token (starts with sbp_) - Get from https://supabase.com/dashboard/account/tokens. This token allows automatic fetching of service role keys for all your projects.
-    required: false
+    required: true
