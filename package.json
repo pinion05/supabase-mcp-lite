@@ -1,7 +1,7 @@
 {
-	"name": "smithery-scaffold",
+	"name": "@pinion05/supabase-mcp-lite",
 	"version": "1.0.0",
-	"description": "",
+	"description": "Minimal Supabase MCP - 70% less context",
 	"main": "index.js",
 	"module": "./src/index.ts",
 	"type": "module",
@@ -9,11 +9,12 @@
 		"dev": "npx @smithery/cli dev",
 		"build": "npx @smithery/cli build"
 	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
+	"keywords": ["supabase", "mcp", "lite"],
+	"author": "pinion05",
+	"license": "MIT",
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.17.4",
+		"@supabase/supabase-js": "^2.45.0",
 		"zod": "^3.25.46"
 	},
 	"devDependencies": {
