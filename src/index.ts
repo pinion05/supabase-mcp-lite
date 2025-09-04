@@ -41,7 +41,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
     try {
       console.log('🌐 [Select] Creating Supabase client for:', projectUrl);
       const client = createClient(projectUrl, config.supabaseKey, {
-        auth: { persistSession: false }
+        auth: { 
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
       });
       
       console.log('📝 [Select] Building query for table:', table);
@@ -129,7 +133,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
     try {
       console.log('🌐 [Mutate] Creating Supabase client for:', projectUrl);
       const client = createClient(projectUrl, config.supabaseKey, {
-        auth: { persistSession: false }
+        auth: { 
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
       });
       
       let result;
@@ -252,7 +260,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
     try {
       console.log('🌐 [Storage] Creating Supabase client for:', projectUrl);
       const client = createClient(projectUrl, config.supabaseKey, {
-        auth: { persistSession: false }
+        auth: { 
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
       });
       
       console.log(`🔀 [Storage] Executing action: ${action} on bucket: ${bucket}`);
@@ -415,7 +427,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
     try {
       console.log('🌐 [Auth] Creating Supabase client for:', projectUrl);
       const client = createClient(projectUrl, config.supabaseKey, {
-        auth: { persistSession: false }
+        auth: { 
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
       });
       
       console.log(`🔀 [Auth] Executing action: ${action}`);
