@@ -2,9 +2,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
-// Configuration schema - only key required
+// Configuration schema - service role key required for full access
 export const configSchema = z.object({
-  supabaseKey: z.string().describe("Supabase service role key"),
+  supabaseKey: z.string().describe("Supabase service role key (not anon key) - required for full database access"),
 });
 
 export default function createServer({ config }: { config: z.infer<typeof configSchema> }) {
@@ -17,12 +17,13 @@ export default function createServer({ config }: { config: z.infer<typeof config
 
   // Check if key is provided
   if (!config?.supabaseKey) {
-    console.error('❌ [Server] CRITICAL: Supabase key not configured!');
-    console.warn("Supabase key not configured. Please provide supabaseKey.");
+    console.error('❌ [Server] CRITICAL: Supabase service role key not configured!');
+    console.warn("Supabase service role key not configured. Please provide supabaseKey (NOT anon key).");
     return server.server;
   }
   
-  console.log('✅ [Server] Supabase key configured successfully');
+  console.log('✅ [Server] Supabase service role key configured successfully');
+  console.log('⚠️  [Server] WARNING: Using service role key - this bypasses Row Level Security (RLS)');
   console.log('📝 [Server] Registering 4 tools: select, mutate, storage, auth');
 
   // Tool 1: Select - Simple table query
@@ -40,11 +41,20 @@ export default function createServer({ config }: { config: z.infer<typeof config
     
     try {
       console.log('🌐 [Select] Creating Supabase client for:', projectUrl);
+      console.log('🔓 [Select] Using service role key - bypassing RLS');
       const client = createClient(projectUrl, config.supabaseKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
           detectSessionInUrl: false
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: {
+            'x-bypass-rls': 'true'  // Explicit RLS bypass with service role
+          }
         }
       });
       
@@ -132,11 +142,20 @@ export default function createServer({ config }: { config: z.infer<typeof config
     
     try {
       console.log('🌐 [Mutate] Creating Supabase client for:', projectUrl);
+      console.log('🔓 [Mutate] Using service role key - bypassing RLS');
       const client = createClient(projectUrl, config.supabaseKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
           detectSessionInUrl: false
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: {
+            'x-bypass-rls': 'true'  // Explicit RLS bypass with service role
+          }
         }
       });
       
@@ -259,11 +278,20 @@ export default function createServer({ config }: { config: z.infer<typeof config
     
     try {
       console.log('🌐 [Storage] Creating Supabase client for:', projectUrl);
+      console.log('🔓 [Storage] Using service role key - full storage access');
       const client = createClient(projectUrl, config.supabaseKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
           detectSessionInUrl: false
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: {
+            'x-bypass-rls': 'true'  // Explicit RLS bypass with service role
+          }
         }
       });
       
@@ -426,11 +454,20 @@ export default function createServer({ config }: { config: z.infer<typeof config
     
     try {
       console.log('🌐 [Auth] Creating Supabase client for:', projectUrl);
+      console.log('🔓 [Auth] Using service role key - full admin access');
       const client = createClient(projectUrl, config.supabaseKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
           detectSessionInUrl: false
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: {
+            'x-bypass-rls': 'true'  // Explicit RLS bypass with service role
+          }
         }
       });
       

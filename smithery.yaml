@@ -1,10 +1,6 @@
 runtime: typescript
 config:
-  supabaseUrl:
-    type: string
-    description: Supabase project URL (optional - if not set, can work with any project)
-    required: false
   supabaseKey:
     type: string
-    description: Supabase service role key
+    description: Supabase service role key (NOT anon key) - required for full database access including insert/update/delete operations. Find this in Supabase Dashboard → Settings → API → service_role key
     required: true
