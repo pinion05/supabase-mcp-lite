@@ -2,8 +2,8 @@ runtime: typescript
 config:
   supabaseUrl:
     type: string
-    description: Supabase project URL
-    required: true
+    description: Supabase project URL (optional - if not set, can work with any project)
+    required: false
   supabaseKey:
     type: string
     description: Supabase service role key
