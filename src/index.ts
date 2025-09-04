@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 // Configuration schema - Personal Access Token for management API
 export const configSchema = z.object({
-  accessToken: z.string().describe("Supabase Personal Access Token (starts with sbp_) - get from https://supabase.com/dashboard/account/tokens"),
+  accessToken: z.string().optional().describe("Supabase Personal Access Token (starts with sbp_) - get from https://supabase.com/dashboard/account/tokens"),
 });
 
 // Cache for project keys to avoid repeated API calls
@@ -71,20 +71,22 @@ export default function createServer({ config }: { config: z.infer<typeof config
 
   // Check if access token is provided
   if (!config?.accessToken) {
-    console.error('❌ [Server] CRITICAL: Supabase Personal Access Token not configured!');
-    console.warn("Please provide accessToken (starts with sbp_) from https://supabase.com/dashboard/account/tokens");
-    return server.server;
-  }
-
-  // Validate token format
-  if (!config.accessToken.startsWith('sbp_')) {
-    console.error('❌ [Server] Invalid access token format. Must start with sbp_');
-    console.warn("Access token should start with sbp_. Get it from https://supabase.com/dashboard/account/tokens");
-    return server.server;
+    console.warn('⚠️  [Server] Supabase Personal Access Token not configured');
+    console.warn("Tools registered but require accessToken to function");
+    console.warn("Get your token from: https://supabase.com/dashboard/account/tokens");
+    // Continue to register tools for scanning, but they won't work without token
+  } else {
+    // Validate token format
+    if (!config.accessToken.startsWith('sbp_')) {
+      console.error('❌ [Server] Invalid access token format. Must start with sbp_');
+      console.warn("Access token should start with sbp_. Get it from https://supabase.com/dashboard/account/tokens");
+      // Continue to register tools for scanning
+    } else {
+      console.log('✅ [Server] Supabase Personal Access Token configured');
+      console.log('⚠️  [Server] Will fetch service role key automatically for each project');
+    }
   }
   
-  console.log('✅ [Server] Supabase Personal Access Token configured');
-  console.log('⚠️  [Server] Will fetch service role key automatically for each project');
   console.log('📝 [Server] Registering 4 tools: select, mutate, storage, auth');
 
   // Tool 1: Select - Simple table query
@@ -99,6 +101,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
     }
   }, async ({ projectUrl, table, where = {}, limit = 100 }) => {
     console.log('🔵 [Select] Started with params:', { projectUrl, table, where, limit });
+    
+    // Check if access token is available
+    if (!config?.accessToken) {
+      throw new Error('Access token not configured. Please add your Supabase Personal Access Token to the config.');
+    }
     
     try {
       // Extract project ID and get service role key
@@ -204,6 +211,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
       data: data ? JSON.stringify(data, null, 2) : 'none',
       where: Object.keys(where).length > 0 ? where : 'none'
     });
+    
+    // Check if access token is available
+    if (!config?.accessToken) {
+      throw new Error('Access token not configured. Please add your Supabase Personal Access Token to the config.');
+    }
     
     try {
       // Extract project ID and get service role key
@@ -344,6 +356,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
       hasData: !!data,
       dataLength: data ? data.length : 0
     });
+    
+    // Check if access token is available
+    if (!config?.accessToken) {
+      throw new Error('Access token not configured. Please add your Supabase Personal Access Token to the config.');
+    }
     
     try {
       // Extract project ID and get service role key
@@ -524,6 +541,11 @@ export default function createServer({ config }: { config: z.infer<typeof config
       hasPassword: !!password,
       id: id || 'none'
     });
+    
+    // Check if access token is available
+    if (!config?.accessToken) {
+      throw new Error('Access token not configured. Please add your Supabase Personal Access Token to the config.');
+    }
     
     try {
       // Extract project ID and get service role key
