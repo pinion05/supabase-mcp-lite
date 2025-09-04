@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 // Configuration schema - minimal
 export const configSchema = z.object({
-  supabaseUrl: z.string().describe("Supabase project URL"),
+  supabaseUrl: z.string().optional().describe("Supabase project URL (or use SUPABASE_URL env)"),
   supabaseKey: z.string().describe("Supabase service role key"),
 });
 
@@ -14,8 +14,14 @@ export default function createServer({ config }: { config: z.infer<typeof config
     version: "1.0.0",
   });
 
+  // Get URL from config or environment variable
+  const supabaseUrl = config.supabaseUrl || process.env.SUPABASE_URL;
+  if (!supabaseUrl) {
+    throw new Error("Supabase URL required: provide supabaseUrl in config or SUPABASE_URL env");
+  }
+
   // Initialize Supabase client
-  const supabase: SupabaseClient = createClient(config.supabaseUrl, config.supabaseKey, {
+  const supabase: SupabaseClient = createClient(supabaseUrl, config.supabaseKey, {
     auth: { persistSession: false }
   });
 

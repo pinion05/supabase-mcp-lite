@@ -19,11 +19,17 @@ Minimal Supabase MCP server - 70% less context usage than standard implementatio
     "command": "npx",
     "args": ["@smithery/cli", "connect", "@pinion05/supabase-mcp-lite"],
     "config": {
-      "supabaseUrl": "YOUR_SUPABASE_URL",
+      "supabaseUrl": "YOUR_SUPABASE_URL",  // Optional if SUPABASE_URL env is set
       "supabaseKey": "YOUR_SERVICE_ROLE_KEY"
     }
   }
 }
+```
+
+Or with environment variable:
+
+```bash
+export SUPABASE_URL=YOUR_SUPABASE_URL
 ```
 
 ## Tools (5)
