@@ -1,6 +1,6 @@
 runtime: typescript
 config:
-  supabaseKey:
+  accessToken:
     type: string
-    description: Supabase service role key (NOT anon key) - required for full database access including insert/update/delete operations. Find this in Supabase Dashboard → Settings → API → service_role key
+    description: Supabase Personal Access Token (starts with sbp_) - Get from https://supabase.com/dashboard/account/tokens. This token allows automatic fetching of service role keys for all your projects.
     required: true

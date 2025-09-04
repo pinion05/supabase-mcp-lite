@@ -2,10 +2,64 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
-// Configuration schema - service role key required for full access
+// Configuration schema - Personal Access Token for management API
 export const configSchema = z.object({
-  supabaseKey: z.string().describe("Supabase service role key (not anon key) - required for full database access"),
+  accessToken: z.string().describe("Supabase Personal Access Token (starts with sbp_) - get from https://supabase.com/dashboard/account/tokens"),
 });
+
+// Cache for project keys to avoid repeated API calls
+const projectKeyCache: { [projectId: string]: { serviceRoleKey: string, anonKey: string } } = {};
+
+async function getProjectKeys(projectId: string, accessToken: string) {
+  // Check cache first
+  if (projectKeyCache[projectId]) {
+    console.log('📦 [Cache] Using cached keys for project:', projectId);
+    return projectKeyCache[projectId];
+  }
+
+  console.log('🔑 [API] Fetching keys for project:', projectId);
+  
+  try {
+    const response = await fetch(`https://api.supabase.com/v1/projects/${projectId}/api-keys`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch project keys: ${response.status} ${response.statusText}`);
+    }
+
+    const keys = await response.json();
+    
+    // Find the service role key
+    const serviceRoleKey = keys.find((k: any) => k.name === 'service_role')?.api_key;
+    const anonKey = keys.find((k: any) => k.name === 'anon')?.api_key;
+    
+    if (!serviceRoleKey) {
+      throw new Error('Service role key not found in project keys');
+    }
+
+    // Cache the keys
+    projectKeyCache[projectId] = { serviceRoleKey, anonKey };
+    console.log('✅ [API] Keys fetched and cached successfully');
+    
+    return projectKeyCache[projectId];
+  } catch (error) {
+    console.error('❌ [API] Failed to fetch project keys:', error);
+    throw error;
+  }
+}
+
+// Extract project ID from URL
+function extractProjectId(projectUrl: string): string {
+  const match = projectUrl.match(/https:\/\/([^.]+)\.supabase\.co/);
+  if (!match) {
+    throw new Error('Invalid Supabase project URL');
+  }
+  return match[1];
+}
 
 export default function createServer({ config }: { config: z.infer<typeof configSchema> }) {
   console.log('🚀 [Server] Initializing Supabase MCP Lite v1.0.0');
@@ -15,15 +69,22 @@ export default function createServer({ config }: { config: z.infer<typeof config
     version: "1.0.0",
   });
 
-  // Check if key is provided
-  if (!config?.supabaseKey) {
-    console.error('❌ [Server] CRITICAL: Supabase service role key not configured!');
-    console.warn("Supabase service role key not configured. Please provide supabaseKey (NOT anon key).");
+  // Check if access token is provided
+  if (!config?.accessToken) {
+    console.error('❌ [Server] CRITICAL: Supabase Personal Access Token not configured!');
+    console.warn("Please provide accessToken (starts with sbp_) from https://supabase.com/dashboard/account/tokens");
+    return server.server;
+  }
+
+  // Validate token format
+  if (!config.accessToken.startsWith('sbp_')) {
+    console.error('❌ [Server] Invalid access token format. Must start with sbp_');
+    console.warn("Access token should start with sbp_. Get it from https://supabase.com/dashboard/account/tokens");
     return server.server;
   }
   
-  console.log('✅ [Server] Supabase service role key configured successfully');
-  console.log('⚠️  [Server] WARNING: Using service role key - this bypasses Row Level Security (RLS)');
+  console.log('✅ [Server] Supabase Personal Access Token configured');
+  console.log('⚠️  [Server] Will fetch service role key automatically for each project');
   console.log('📝 [Server] Registering 4 tools: select, mutate, storage, auth');
 
   // Tool 1: Select - Simple table query
@@ -40,9 +101,13 @@ export default function createServer({ config }: { config: z.infer<typeof config
     console.log('🔵 [Select] Started with params:', { projectUrl, table, where, limit });
     
     try {
+      // Extract project ID and get service role key
+      const projectId = extractProjectId(projectUrl);
+      const { serviceRoleKey } = await getProjectKeys(projectId, config.accessToken);
+      
       console.log('🌐 [Select] Creating Supabase client for:', projectUrl);
       console.log('🔓 [Select] Using service role key - bypassing RLS');
-      const client = createClient(projectUrl, config.supabaseKey, {
+      const client = createClient(projectUrl, serviceRoleKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
@@ -141,9 +206,13 @@ export default function createServer({ config }: { config: z.infer<typeof config
     });
     
     try {
+      // Extract project ID and get service role key
+      const projectId = extractProjectId(projectUrl);
+      const { serviceRoleKey } = await getProjectKeys(projectId, config.accessToken);
+      
       console.log('🌐 [Mutate] Creating Supabase client for:', projectUrl);
       console.log('🔓 [Mutate] Using service role key - bypassing RLS');
-      const client = createClient(projectUrl, config.supabaseKey, {
+      const client = createClient(projectUrl, serviceRoleKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
@@ -277,9 +346,13 @@ export default function createServer({ config }: { config: z.infer<typeof config
     });
     
     try {
+      // Extract project ID and get service role key
+      const projectId = extractProjectId(projectUrl);
+      const { serviceRoleKey } = await getProjectKeys(projectId, config.accessToken);
+      
       console.log('🌐 [Storage] Creating Supabase client for:', projectUrl);
       console.log('🔓 [Storage] Using service role key - full storage access');
-      const client = createClient(projectUrl, config.supabaseKey, {
+      const client = createClient(projectUrl, serviceRoleKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
@@ -453,9 +526,13 @@ export default function createServer({ config }: { config: z.infer<typeof config
     });
     
     try {
+      // Extract project ID and get service role key
+      const projectId = extractProjectId(projectUrl);
+      const { serviceRoleKey } = await getProjectKeys(projectId, config.accessToken);
+      
       console.log('🌐 [Auth] Creating Supabase client for:', projectUrl);
       console.log('🔓 [Auth] Using service role key - full admin access');
-      const client = createClient(projectUrl, config.supabaseKey, {
+      const client = createClient(projectUrl, serviceRoleKey, {
         auth: { 
           persistSession: false,
           autoRefreshToken: false,
