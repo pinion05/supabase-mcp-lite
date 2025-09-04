@@ -1,1 +1,10 @@
 runtime: typescript
+config:
+  supabaseUrl:
+    type: string
+    description: Supabase project URL
+    required: true
+  supabaseKey:
+    type: string
+    description: Supabase service role key
+    required: true
