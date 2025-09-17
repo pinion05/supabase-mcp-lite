@@ -14,81 +14,120 @@
  * https://smithery.ai/docs/concepts/cli
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
 
-// Optional: If you have user-level config, define it here
-// This should map to the config in your smithery.yaml file
 export const configSchema = z.object({
-	debug: z.boolean().default(false).describe("Enable debug logging"),
-})
+	supabase_Access_Token: z.string().describe("Enter API key"),
+	enableLogging: z.boolean().default(false).describe("Enable logging"),
+});
 
 export default function createServer({
 	config,
 }: {
-	config: z.infer<typeof configSchema> // Define your config in smithery.yaml
+	config: z.infer<typeof configSchema>
 }) {
 	const server = new McpServer({
-		name: "Say Hello",
-		version: "1.0.0",
+		name: "supabase-mcp-lite",
+		version: "0.0.1",
 	})
+
+
+		server.registerTool(
+		"check_access_key",
+		{
+			title: "check_access_key",
+			description: "print users access key",
+			inputSchema: {},
+		},
+async () => {
+			return {
+				content: [{ type: "text", text: `Your access key is ${config.supabase_Access_Token}` }],
+			};
+		},
+	)
+
+
 
 	// Add a tool
 	server.registerTool(
-		"hello",
+		"get_project_list",
 		{
-			title: "Hello Tool",
-			description: "Say hello to someone",
-			inputSchema: { name: z.string().describe("Name to greet") },
+			title: "get_project_list",
+			description: "Get project list from supabase",
+			inputSchema: {},
 		},
-		async ({ name }) => ({
-			content: [{ type: "text", text: `Hello, ${name}!` }],
-		}),
-	)
-
-	// Add a resource
-	server.registerResource(
-		"hello-world-history",
-		"history://hello-world",
-		{
-			title: "Hello World History",
-			description: "The origin story of the famous 'Hello, World' program",
-		},
-		async uri => ({
-			contents: [
-				{
-					uri: uri.href,
-					text: '"Hello, World" first appeared in a 1972 Bell Labs memo by Brian Kernighan and later became the iconic first program for beginners in countless languages.',
-					mimeType: "text/plain",
+async () => {
+			const response = await fetch("https://api.supabase.com/v1/projects", {
+				method: "GET",
+				headers: {
+					"Authorization": `Bearer ${config.supabase_Access_Token}`,
+					"Accept": "application/json",
 				},
-			],
-		}),
-	)
-
-	// Add a prompt
-	server.registerPrompt(
-		"greet",
-		{
-			title: "Hello Prompt",
-			description: "Say hello to someone",
-			argsSchema: {
-				name: z.string().describe("Name of the person to greet"),
-			},
-		},
-		async ({ name }) => {
-			return {
-				messages: [
-					{
-						role: "user",
-						content: {
+			});
+			if (!response.ok) {
+				const errorBody = await response.text().catch(() => "");
+				return {
+					content: [
+						{
 							type: "text",
-							text: `Say hello to ${name}`,
+							text: `Failed to fetch projects (${response.status} ${response.statusText}). ${errorBody}`,
 						},
+					],
+				};
+			}
+			const projects = await response.json();
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(projects, null, 2),
 					},
 				],
-			}
+			};
 		},
 	)
 
+
+	server.registerTool(
+		"get_table_list",
+		{
+			title: "get_table_list",
+			description: "Get table list from a specific project",
+			inputSchema: {
+				project_ref: z.string().describe("Enter your project ref"),
+			},
+		},
+async (input) => {
+			const response = await fetch(`https://api.supabase.com/v1/projects/${input.project_ref}/database/context`, {
+				method: "GET",
+				headers: {
+					"Authorization": `Bearer ${config.supabase_Access_Token}`,
+					"Accept": "application/json",
+				},
+			});
+			if (!response.ok) {
+				const errorBody = await response.text().catch(() => "");
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Failed to fetch projects (${response.status} ${response.statusText}). ${errorBody}`,
+						},
+					],
+				};
+			}
+			const projects = (await response.json()).databases[0].schemas[5];
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(projects, null, 2),
+					},
+				],
+			};
+		},
+	)
 	return server.server
 }
