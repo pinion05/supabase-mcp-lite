@@ -1,19 +1,3 @@
-/**
- * 👋 Welcome to your Smithery project!
- * To run your server, run "npm run dev"
- *
- * You might find these resources useful:
- *
- * 🧑‍💻 MCP's TypeScript SDK (helps you define your server)
- * https://github.com/modelcontextprotocol/typescript-sdk
- *
- * 📝 smithery.yaml (defines user-level config, like settings or API keys)
- * https://smithery.ai/docs/build/project-config/smithery-yaml
- *
- * 💻 smithery CLI (run "npx @smithery/cli dev" or explore other commands below)
- * https://smithery.ai/docs/concepts/cli
- */
-
 import { Server } from "@modelcontextprotocol/sdk/server";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
@@ -118,7 +102,7 @@ async (input) => {
 					],
 				};
 			}
-			const projects = (await response.json()).databases[0].schemas[5];
+			const projects = (await response.json()).databases[0].schemas[4];
 			return {
 				content: [
 					{
@@ -129,5 +113,53 @@ async (input) => {
 			};
 		},
 	)
+
+
+
+	server.registerTool(
+		"excute_query",
+		{
+			title: "excute_query",
+			description: "Execute a SQL query on a specific project",
+			inputSchema: {
+				project_ref: z.string().describe("Enter your project ref"),
+				query: z.string().describe("Enter your SQL query"),
+			},
+		},
+async (input) => {
+			const response = await fetch(`https://api.supabase.com/v1/projects/${input.project_ref}/database/query`, {
+				method: "POST",
+				headers: {
+					"Authorization": `Bearer ${config.supabase_Access_Token}`,
+					"Accept": "application/json",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					query: input.query,
+				}),
+			});
+			if (!response.ok) {
+				const errorBody = await response.text().catch(() => "");
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Failed to fetch projects (${response.status} ${response.statusText}). ${errorBody}`,
+						},
+					],
+				};
+			}
+			const res = (await response.json());
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(res, null, 2),
+					},
+				],
+			};
+		},
+	)
+
 	return server.server
 }
