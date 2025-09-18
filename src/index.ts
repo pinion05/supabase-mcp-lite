@@ -1,6 +1,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+import { ApiKeyList } from "./type";
 
 export const configSchema = z.object({
 	supabase_Access_Token: z.string().describe("Enter API key"),
@@ -19,15 +20,25 @@ export default function createServer({
 
 
 		server.registerTool(
-		"check_access_key",
+		"get_access_key",
 		{
-			title: "check_access_key",
+			title: "get_access_key",
 			description: "print users access key",
-			inputSchema: {},
+			inputSchema: {
+				project_ref: z.string().describe("Enter your project ref"),
+			},
 		},
-async () => {
+		async (input) => {
+			const response: Response = await fetch(`https://api.supabase.com/v1/projects/${input.project_ref}/api-keys`,{
+				method: "GET",
+				headers: {
+					authorization: `Bearer ${config.supabase_Access_Token}`,
+					accept: "application/json",
+				}
+			})
+			const data: ApiKeyList = await response.json()
 			return {
-				content: [{ type: "text", text: `Your access key is ${config.supabase_Access_Token}` }],
+				content: [{ type: "text", text: `personal access Token : ${config.supabase_Access_Token}\nproject annoKey : ${JSON.stringify(data[0].api_key, null, 2)}\nproject service role key: ${JSON.stringify(data[1].api_key, null, 2)}` }],
 			};
 		},
 	)
