@@ -20,10 +20,10 @@ export default function createServer({
 
 
 		server.registerTool(
-		"get_access_key",
+		"get_api_keys",
 		{
-			title: "get_access_key",
-			description: "print users access key",
+			title: "get_api_keys",
+			description: "Get Supabase personal key, Project anon key, and Project service role key",
 			inputSchema: {
 				project_ref: z.string().describe("Enter your project ref"),
 			},
