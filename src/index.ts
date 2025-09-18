@@ -128,13 +128,13 @@ async (input) => {
 
 
 	server.registerTool(
-		"excute_query",
+		"execute_query",
 		{
-			title: "excute_query",
+			title: "execute_query",
 			description: "Execute a SQL query on a specific project",
 			inputSchema: {
 				project_ref: z.string().describe("Enter your project ref"),
-				query: z.string().describe("Enter your SQL query"),
+				query: z.string().describe("Enter your SQL query you want to execute"),
 			},
 		},
 async (input) => {
