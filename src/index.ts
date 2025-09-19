@@ -1,7 +1,6 @@
-import { Server } from "@modelcontextprotocol/sdk/server";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { z } from "zod"
-import { ApiKeyList } from "./type";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import type { ApiKeyList } from "./type";
 
 export const configSchema = z.object({
 	supabase_Access_Token: z.string().describe("Enter API key"),
@@ -11,39 +10,45 @@ export const configSchema = z.object({
 export default function createServer({
 	config,
 }: {
-	config: z.infer<typeof configSchema>
+	config: z.infer<typeof configSchema>;
 }) {
 	const server = new McpServer({
 		name: "supabase-mcp-lite",
 		version: "0.0.1",
-	})
+	});
 
-
-		server.registerTool(
+	server.registerTool(
 		"get_api_keys",
 		{
 			title: "get_api_keys",
-			description: "Get Supabase personal key, Project anon key, and Project service role key",
+			description:
+				"Get Supabase personal key, Project anon key, and Project service role key",
 			inputSchema: {
 				project_ref: z.string().describe("Enter your project ref"),
 			},
 		},
 		async (input) => {
-			const response: Response = await fetch(`https://api.supabase.com/v1/projects/${input.project_ref}/api-keys`,{
-				method: "GET",
-				headers: {
-					authorization: `Bearer ${config.supabase_Access_Token}`,
-					accept: "application/json",
-				}
-			})
-			const data: ApiKeyList = await response.json()
+			const response: Response = await fetch(
+				`https://api.supabase.com/v1/projects/${input.project_ref}/api-keys`,
+				{
+					method: "GET",
+					headers: {
+						authorization: `Bearer ${config.supabase_Access_Token}`,
+						accept: "application/json",
+					},
+				},
+			);
+			const data: ApiKeyList = await response.json();
 			return {
-				content: [{ type: "text", text: `personal access Token : ${config.supabase_Access_Token}\nproject annoKey : ${JSON.stringify(data[0].api_key, null, 2)}\nproject service role key: ${JSON.stringify(data[1].api_key, null, 2)}` }],
+				content: [
+					{
+						type: "text",
+						text: `personal access Token : ${config.supabase_Access_Token}\nproject annoKey : ${JSON.stringify(data[0].api_key, null, 2)}\nproject service role key: ${JSON.stringify(data[1].api_key, null, 2)}`,
+					},
+				],
 			};
 		},
-	)
-
-
+	);
 
 	// Add a tool
 	server.registerTool(
@@ -53,12 +58,12 @@ export default function createServer({
 			description: "Get project list from supabase",
 			inputSchema: {},
 		},
-async () => {
+		async () => {
 			const response = await fetch("https://api.supabase.com/v1/projects", {
 				method: "GET",
 				headers: {
-					"Authorization": `Bearer ${config.supabase_Access_Token}`,
-					"Accept": "application/json",
+					Authorization: `Bearer ${config.supabase_Access_Token}`,
+					Accept: "application/json",
 				},
 			});
 			if (!response.ok) {
@@ -82,8 +87,7 @@ async () => {
 				],
 			};
 		},
-	)
-
+	);
 
 	server.registerTool(
 		"get_table_list",
@@ -94,14 +98,17 @@ async () => {
 				project_ref: z.string().describe("Enter your project ref"),
 			},
 		},
-async (input) => {
-			const response = await fetch(`https://api.supabase.com/v1/projects/${input.project_ref}/database/context`, {
-				method: "GET",
-				headers: {
-					"Authorization": `Bearer ${config.supabase_Access_Token}`,
-					"Accept": "application/json",
+		async (input) => {
+			const response = await fetch(
+				`https://api.supabase.com/v1/projects/${input.project_ref}/database/context`,
+				{
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${config.supabase_Access_Token}`,
+						Accept: "application/json",
+					},
 				},
-			});
+			);
 			if (!response.ok) {
 				const errorBody = await response.text().catch(() => "");
 				return {
@@ -123,9 +130,7 @@ async (input) => {
 				],
 			};
 		},
-	)
-
-
+	);
 
 	server.registerTool(
 		"execute_query",
@@ -137,18 +142,21 @@ async (input) => {
 				query: z.string().describe("Enter your SQL query you want to execute"),
 			},
 		},
-async (input) => {
-			const response = await fetch(`https://api.supabase.com/v1/projects/${input.project_ref}/database/query`, {
-				method: "POST",
-				headers: {
-					"Authorization": `Bearer ${config.supabase_Access_Token}`,
-					"Accept": "application/json",
-					"Content-Type": "application/json",
+		async (input) => {
+			const response = await fetch(
+				`https://api.supabase.com/v1/projects/${input.project_ref}/database/query`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${config.supabase_Access_Token}`,
+						Accept: "application/json",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						query: input.query,
+					}),
 				},
-				body: JSON.stringify({
-					query: input.query,
-				}),
-			});
+			);
 			if (!response.ok) {
 				const errorBody = await response.text().catch(() => "");
 				return {
@@ -160,7 +168,7 @@ async (input) => {
 					],
 				};
 			}
-			const res = (await response.json());
+			const res = await response.json();
 			return {
 				content: [
 					{
@@ -170,10 +178,7 @@ async (input) => {
 				],
 			};
 		},
-	)
+	);
 
-
-
-
-	return server.server
+	return server.server;
 }
