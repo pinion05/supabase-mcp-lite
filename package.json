@@ -18,6 +18,7 @@
 		"zod": "^3.25.46"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.2.4",
 		"@smithery/cli": "^1.2.4",
 		"tsx": "^4.19.4"
 	}
