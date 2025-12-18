@@ -1,4 +1,5 @@
 # Supabase MCP Lite
+<img width="518" height="141" alt="image" src="https://github.com/user-attachments/assets/04193768-632c-4e32-93d2-291158c804b5" />
 
 Minimal Supabase MCP server - 70% less context usage than standard implementations.
 
