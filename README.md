@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/pinion05-supabase-mcp-lite-badge.png)](https://mseep.ai/app/pinion05-supabase-mcp-lite)
+
 # Supabase MCP Lite
 <img width="518" height="141" alt="image" src="https://github.com/user-attachments/assets/04193768-632c-4e32-93d2-291158c804b5" />
 
